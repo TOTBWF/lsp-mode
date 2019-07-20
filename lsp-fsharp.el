@@ -90,12 +90,24 @@ To use the mono/.Net framework version, set this to \"https://ci.appveyor.com/ap
   "Downloads the latest version of fsautocomplete, and set `lsp-fsharp-server-path'."
   (let* ((temp-file (make-temp-file "fsautocomplete" nil ".zip"))
          (install-dir-full (expand-file-name lsp-fsharp-server-install-dir))
-         (unzip-script (cond ((executable-find "unzip") (format "bash -c 'mkdir -p %s && unzip -qq %s -d %s'") install-dir-full temp-file install-dir-full)
+         (unzip-script (cond ((executable-find "unzip") (format "mkdir -p %s && unzip -qq %s -d %s" install-dir-full temp-file install-dir-full))
                              ((executable-find "powershell") (format "powershell -noprofile -noninteractive -nologo -ex bypass Expand-Archive -path '%s' -dest '%s'" temp-file install-dir-full))
-                             (t (user-error (format "Unable to unzip server - file %s cannot be extracted, please extract it manually") temp-file)))))
+                             (t (user-error (format "Unable to unzip server - file %s cannot be extracted, please extract it manually" temp-file))))))
     (url-copy-file lsp-fsharp-server-download-url temp-file t)
     (shell-command unzip-script)
     (shell-command (format "%s %s --version" (lsp-fsharp--fsac-runtime-cmd) (lsp-fsharp--fsac-cmd)))))
+
+(defun lsp-fsharp-update ()
+  "Update the LSP F# autocomplete server."
+  (interactive)
+  (let ((install-dir-full (expand-file-name lsp-fsharp-server-install-dir)))
+    (message "Server update started...")
+    (when (file-directory-p install-dir-full)
+      (delete-directory install-dir-full t))
+    (mkdir install-dir-full t)
+    (lsp-fsharp--fsac-install)
+    (message "Server update finished!")))
+
 
 (defun lsp-fsharp--make-launch-cmd ()
   "Build the command required to launch fsautocomplete."
